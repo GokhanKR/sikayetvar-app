@@ -17,13 +17,11 @@ export default {
     },
   },
   data: () => ({
-      editor: null
+    editor: null,
   }),
   watch: {
-      editor() {
-          console.log(this.editor);
-      }
-  }
+    editor() {},
+  },
 };
 </script>
 
