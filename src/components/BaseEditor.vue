@@ -197,6 +197,11 @@ export default {
 </script>
 
 <style lang="scss">
+
+$blacklistedColor: rgb(187, 0, 0);
+$graylistedColor: #bbb;
+$undefinedColor: yellow;
+
 .editor-container {
   position: relative;
 }
@@ -246,19 +251,45 @@ export default {
 .highlights mark {
   color: transparent;
   background-color: transparent;
-  border-radius: 3px;
 }
 
 .blacklisted {
-  background-color: rgb(255, 210, 210) !important;
+  background-color: $blacklistedColor !important;
 }
 
 .graylisted {
-  background-color: yellow !important;
+  background-color: $undefinedColor !important;
 }
 
 .undefined {
-  background-color: #ddd !important;
+  background-color: $graylistedColor !important;
+}
+
+mark.blacklisted {
+  font-weight: bold;
+  color: $blacklistedColor !important;
+  background-color: transparent !important;
+  position: relative;
+}
+
+mark.blacklisted::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  right: 0;
+  background-color: $blacklistedColor !important;
+  height: 2px;
+}
+
+mark.graylisted {
+  border-radius: 3px;
+}
+
+mark.undefined {
+  background-color: transparent !important;
+  border-bottom: 2px solid $graylistedColor;
 }
 
 textarea:focus,
