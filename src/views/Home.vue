@@ -22,7 +22,12 @@
           “<span class="text">{{ text }}</span
           >”
         </span>
-        <v-btn fab x-small color="primary" @click="replaceText" class="elevation-1"
+        <v-btn
+          fab
+          x-small
+          color="primary"
+          @click="replaceText"
+          class="elevation-1"
           ><v-icon>mdi-pencil</v-icon></v-btn
         >
       </p>

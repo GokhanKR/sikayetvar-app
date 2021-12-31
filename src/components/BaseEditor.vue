@@ -42,7 +42,6 @@
 </template>
 
 <script>
-/* eslint-disable */
 export default {
   props: {
     value: String,
@@ -124,6 +123,7 @@ export default {
         selectionStart = this.editorRef.selectionStart,
         selectionEnd = this.editorRef.selectionEnd;
 
+      // Is the output the same as the original output?
       if (text === this.content.phrase) {
         this.editorRef.value = text;
 
@@ -137,12 +137,30 @@ export default {
         }
 
         this.$emit("input", this.editorRef.value);
+
+        // smart selector behavior in word
+        while (
+          this.editorRef.value[selectionStart]?.match(/\w/) &&
+          this.editorRef.value.length >= selectionStart
+        ) {
+          selectionStart++;
+          selectionEnd++;
+        }
+
+        // set the editor selection start and end positions
         this.editorRef.selectionStart = selectionStart;
         this.editorRef.selectionEnd = selectionEnd;
       } else {
         this.$emit("phrase", true);
       }
     },
+    /**
+     * Set up hightlighters
+     *
+     * @param {String} text
+     *
+     * @returns {Void}
+     */
     parseText(text) {
       this.highlightsTypes.forEach((h) => {
         this.highlights[h].forEach((item) => {
@@ -159,12 +177,18 @@ export default {
     },
   },
   watch: {
+    /**
+     * change phrase when change
+     */
     "content.phrase": {
       handler() {
         this.setPhrase(this.content.phrase);
       },
       deep: true,
     },
+    /**
+     * change phrase when change
+     */
     highlights() {
       this.parseText(this.value);
     },

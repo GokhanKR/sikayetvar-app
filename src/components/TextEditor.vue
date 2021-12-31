@@ -57,6 +57,11 @@ export default {
     },
   },
   methods: {
+    /**
+     * Requests content
+     * 
+     * @returns {Object}
+     */
     async sendContent() {
       this.loading = true;
 
@@ -75,49 +80,52 @@ export default {
         },
       });
     },
+    /**
+     * Resync when text input
+     */
     phrase() {
       this.refreshText();
     },
+    /**
+     * Refresh content with time interval
+     */
     refreshText() {
       if (this.isChanged || this.isEmpty) return;
 
+      // clear if there is a request before
       this.request = null;
+
+      // If there is a time setting before, remove it
       if (this.contentTimeout) {
         clearTimeout(this.contentTimeout);
       }
+
+      // set timeout for api request
       this.contentTimeout = setTimeout(() => {
         this.request = this.sendContent();
       }, this.contentTimeoutTime);
     },
   },
-  // created() {
-  //   let self = this
-  //   axios.interceptors.response.use(
-  //     function (response) {
-  //       if (self.loading) {
-  //         return response
-  //       } else {
-  //         return;
-  //       }
-  //       // throw new axios.Cancel("Operation canceled by the user.");
-  //     },
-  //     function (error) {
-  //       return Promise.reject(error);
-  //     }
-  //   );
-  // },
   watch: {
+    /**
+     * Run when changes are made in the editor
+     */
     editor() {
       this.refreshText();
     },
+    /**
+     * Run when deper is entered from outside
+     */
     value() {
       this.editor = this.value;
     },
+    /**
+     * Work on request
+     */
     request() {
       if (this.request) {
         this.request
           .then((res) => {
-            // console.log(res);
             if (this.request) {
               this.highlights = { ...res.data };
               this.content.phrase = res.data.phrase;

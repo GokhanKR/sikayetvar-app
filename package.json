@@ -46,5 +46,10 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ]
+  ],
+  "author": {
+    "name": "Gokhan Korul",
+    "email": "gokhank58@gmail.com",
+    "url": "https://www.gokhankr.com"
+  }
 }
