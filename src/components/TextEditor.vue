@@ -1,6 +1,11 @@
 <template>
   <div>
-    <base-editor v-model="editor" :highlights="highlights" :phrase="phrase" />
+    <base-editor
+      v-model="editor"
+      :highlights="highlights"
+      :content="content"
+      @phrase="phrase"
+    />
   </div>
 </template>
 
@@ -19,53 +24,114 @@ export default {
   },
   data: () => ({
     editor: null,
-    rawEditor: null,
-    lastEditor: null,
     contentTimeout: null,
     contentTimeoutTime: 550,
+    loading: false,
     highlights: {
       blackListed: [],
       companies: [],
       grayListed: [],
       undefined: [],
     },
-    phrase: null,
+    content: {
+      phrase: null,
+      last: null,
+    },
+    request: null,
   }),
+  computed: {
+    /**
+     * @returns {Boolean}
+     */
+    isChanged() {
+      return (
+        this.editor?.replaceAll(/\s/g, "") ===
+        this.content.phrase?.replaceAll(/\s/g, "")
+      );
+    },
+    /**
+     * @returns {Boolean}
+     */
+    isEmpty() {
+      return !this.editor == true;
+    },
+  },
   methods: {
-    sendContent() {
-      axios({
+    async sendContent() {
+      this.loading = true;
+
+      let editor = this.editor;
+
+      this.content.phrase = null;
+      this.content.last = editor;
+      this.request = null;
+
+      return await axios({
         url: "https://api.sikayetvar.com/dictionary/phrase/check",
         method: "POST",
-        data: this.editor,
+        data: editor,
         headers: {
           "Content-Type": "text/plain",
         },
-      })
-        .then((res) => {
-          if (res.status == 200) {
-            this.highlights = { ...res.data };
-            this.phrase = res.data.phrase;
-          } else {
-            this.$notify(0, "Metin ayrıştırması başarısız oldu!");
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      });
     },
-    // parseText(text) {},
-  },
-  watch: {
-    editor() {
+    phrase() {
+      this.refreshText();
+    },
+    refreshText() {
+      if (this.isChanged || this.isEmpty) return;
+
+      this.request = null;
       if (this.contentTimeout) {
         clearTimeout(this.contentTimeout);
       }
       this.contentTimeout = setTimeout(() => {
-        this.sendContent();
+        this.request = this.sendContent();
       }, this.contentTimeoutTime);
+    },
+  },
+  // created() {
+  //   let self = this
+  //   axios.interceptors.response.use(
+  //     function (response) {
+  //       if (self.loading) {
+  //         return response
+  //       } else {
+  //         return;
+  //       }
+  //       // throw new axios.Cancel("Operation canceled by the user.");
+  //     },
+  //     function (error) {
+  //       return Promise.reject(error);
+  //     }
+  //   );
+  // },
+  watch: {
+    editor() {
+      this.refreshText();
     },
     value() {
       this.editor = this.value;
+    },
+    request() {
+      if (this.request) {
+        this.request
+          .then((res) => {
+            // console.log(res);
+            if (this.request) {
+              this.highlights = { ...res.data };
+              this.content.phrase = res.data.phrase;
+            }
+          })
+          .catch((err) => {
+            this.$notify(0, "Metin ayrıştırması başarısız oldu!");
+            console.error(err);
+          })
+          .finally(() => {
+            this.loading = false;
+            this.request = null;
+          });
+      }
     },
   },
 };

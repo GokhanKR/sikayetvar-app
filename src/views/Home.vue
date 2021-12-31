@@ -3,7 +3,7 @@
     <div class="mb-5">
       <h2 class="title secondary--text mb-1">
         <v-icon left size="28" color="secondary">mdi-text</v-icon>
-        Şikayetvar Text Editörü
+        Text Editörü
       </h2>
       <v-divider></v-divider>
     </div>

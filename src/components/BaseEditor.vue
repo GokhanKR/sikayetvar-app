@@ -7,17 +7,19 @@
       placeholder="Please type your message"
       @input="handleInput"
       @scroll="handleScroll"
+      @keyup="handleKeydown"
       :value="value"
       :style="{ ...viewStyle, ...backStyle }"
     ></textarea>
     <div class="backdrop" ref="backdrop" :style="backStyle">
-      <div class="highlights" :style="viewStyle"></div>
+      <div class="highlights" :style="viewStyle" v-html="highlightsValue"></div>
     </div>
     <div class="infos"></div>
   </div>
 </template>
 
 <script>
+/* eslint-disable */
 export default {
   props: {
     value: String,
@@ -30,12 +32,14 @@ export default {
       type: String,
       default: "100%",
     },
-    phrase: String,
+    content: Object,
   },
   name: "BaseEditor",
   data: () => ({
     selectionStart: 0,
     selectionEnd: 0,
+    highlightsValue: null,
+    highlightsTypes: ["blackListed", "grayListed", "undefined"],
   }),
   computed: {
     /**
@@ -52,8 +56,9 @@ export default {
      */
     viewStyle() {
       return {
-        padding: "1em",
+        padding: "15px",
         letterSpacing: "1px",
+        font: "16px/28px 'Roboto', sans-serif",
       };
     },
     /**
@@ -77,40 +82,82 @@ export default {
       this.backdropRef.scrollTop = e.target.scrollTop;
       this.backdropRef.scrollLeft = e.target.scrollLeft;
     },
+    handleKeydown(e) {
+      this.selectionStart = e.target.selectionStart;
+      this.selectionEnd = e.target.selectionEnd;
+    },
     setPhrase(text) {
-      let selection = this.editorRef.selectionStart;
+      if (text === null) return;
 
-      this.$emit("input", text);
-      this.editorRef.selectionStart = selection;
+      let val = this.editorRef.value,
+        arr = val.split(""),
+        selectionStart = this.editorRef.selectionStart,
+        selectionEnd = this.editorRef.selectionEnd;
+
+      if (text === this.content.phrase) {
+        this.editorRef.value = text;
+
+        // white space modifiers for selection caret
+        if (val[selectionStart - 1] == " " && val[selectionStart] == " ") {
+          arr.splice(selectionStart - 1, 2, " ", " ").join("");
+          this.editorRef.value = arr.join("");
+        } else if (val[selectionStart - 1] == " ") {
+          arr.splice(selectionStart - 1, 1, " ").join("");
+          this.editorRef.value = arr.join("");
+        }
+
+        this.$emit("input", this.editorRef.value);
+        this.editorRef.selectionStart = selectionStart;
+        this.editorRef.selectionEnd = selectionEnd;
+      } else {
+        this.$emit("phrase", true);
+      }
+    },
+    parseText(text) {
+      this.highlightsTypes.forEach((h) => {
+        this.highlights[h].forEach((item) => {
+          text = text
+            .replace(/\n$/g, "\n\n")
+            .replace(
+              new RegExp(item, 'gi'),
+              "<mark class='" + h.toLowerCase() + "'>$&</mark>"
+            );
+        });
+      });
+
+      this.highlightsValue = text;
     },
   },
   watch: {
-    phrase() {
-      this.setPhrase(this.phrase);
+    "content.phrase": {
+      handler() {
+        this.setPhrase(this.content.phrase);
+      },
+      deep: true,
     },
-    value() {
-      this.selectionStart = this.editorRef.selectionStart;
-      this.selectionEnd = this.editorRef.selectionEnd;
+    value(value) {
+      this.parseText(value);
     },
   },
 };
 </script>
 
-<style scoped>
+<style lang="scss">
 .editor-container {
   position: relative;
 }
 
+.v-application .editor.primary,
 .editor.primary {
   border: 2px solid;
   display: block;
   position: relative;
   z-index: 2;
   color: #444;
-  background-color: transparent !important;
   overflow: auto;
   resize: none;
   transition: transform 1s;
+  background-color: transparent !important;
 }
 
 .backdrop {
@@ -119,9 +166,9 @@ export default {
   top: 0;
   left: 0;
   overflow: auto;
-  background-color: #efefef !important;
   pointer-events: none;
   transition: transform 1s;
+  background-color: #efefef !important;
 }
 
 .editor.primary,
@@ -129,17 +176,54 @@ export default {
   border-radius: 10px;
 }
 
-.highlights {
+.highlights,
+.highlights mark {
   white-space: pre-wrap;
   word-wrap: break-word;
-  color: transparent;
 }
 
-mark {
-  border-radius: 3px;
+.highlights {
   color: transparent;
-  background-color: #b1d5e5;
+  font-weight: normal;
 }
+
+.highlights mark {
+  color: transparent;
+  position: relative;
+  background-color: transparent;
+}
+
+.highlights mark.blacklisted {
+  position: relative;
+  top: 2px;
+  border-radius: 3px;
+  background-color: rgb(253, 191, 191);
+}
+
+.highlights mark.graylisted {
+  top: 2px;
+  border-radius: 3px;
+  background-color: yellow;  
+}
+
+.highlights mark.undefined {
+  border-bottom: 2px solid grey;  
+}
+
+/* .highlights mark.blacklisted::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+    transform: translateY(-50%);
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: red;
+} */
+
+/* .highlights mark.blacklisted {
+  border-bottom: 2px solid red;
+} */
 
 textarea:focus,
 button:focus {
